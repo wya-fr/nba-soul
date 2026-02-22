@@ -1,0 +1,740 @@
+import React, { useState, useEffect } from 'react';
+import { Trophy, Activity, Crosshair, Brain, RotateCcw, Play } from 'lucide-react';
+
+// --- 資料設定區 ---
+
+// 13 種角色模板定義
+const profiles = {
+  skywalker: {
+    id: 'skywalker',
+    title: '天空行者',
+    subtitle: 'Ja Morant / Dwyane Wade',
+    stats: [9, 5, 7, 5, 10, 10], // 破壞, 射程, 球商, 防守, 體能, 華麗
+    desc: '你的籃球靈魂渴望飛翔。你欣賞那種無視物理定律的狂氣，對你來說，籃球就是要炸裂、要讓觀眾驚呼！你不喜歡躲避防守，你更喜歡直接挑戰長人，用不可思議的滯空能力完成隔扣。對你來說，籃球就是一場飛行表演。',
+    quote: '「地心引力抓不住你，你的極限是天空。」',
+    colors: ['#FFFFFF', '#52525B'], // 簡約黑白配色
+    spectrum: { playstyle: 95, mentality: 30 }, // playstyle: 0(地板)-100(天空), mentality: 0(孤狼)-100(團隊)
+    images: [
+      'https://lh3.googleusercontent.com/d/1cNF9x7wMn9l85H-1u7vf_C1UpdLryKLN',
+      'https://lh3.googleusercontent.com/d/1yP9ZA_NWi1jIF7iU5vXSqg8BavrB3dnS'
+    ]
+  },
+  ankleBreaker: {
+    id: 'ankleBreaker',
+    title: '腳踝終結者',
+    subtitle: 'Kyrie Irving / Jamal Crawford',
+    stats: [9, 8, 6, 4, 7, 10],
+    desc: '你的籃球靈魂追求美感。你認為進球不只要進，還要進得漂亮。你欣賞極致的技術細節，把對手晃倒是你最大的快樂。你把球場當作畫布，用變幻莫測的運球節奏讓防守者崩潰。',
+    quote: '「過你就像過清晨的馬路一樣簡單。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 5, mentality: 15 },
+    images: [
+      'https://lh3.googleusercontent.com/d/1x3YGdXAbYjpbviQsslD1EHBvoLX3ZUrj',
+      'https://lh3.googleusercontent.com/d/1QboV-QMQC7DHhgP6_Xx2M-F5QrQlz_8e'
+    ]
+  },
+  answer: {
+    id: 'answer',
+    title: '孤膽戰神',
+    subtitle: 'Allen Iverson / Kobe Bryant',
+    stats: [10, 6, 5, 6, 8, 9],
+    desc: '你的籃球靈魂是不屈。你欣賞那種以小搏大、對抗世界的英雄主義。就算全世界都與你為敵，就算身上帶著傷，你也會一次次衝進禁區，把勝負扛在自己肩上。',
+    quote: '「我把每一場比賽都當作最後一場來打。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 30, mentality: 5 },
+    images: [
+      'https://lh3.googleusercontent.com/d/1mW8FV_ZxC5BOJjUSyaxrqingwpjr1uPR',
+      'https://lh3.googleusercontent.com/d/1MvowU378_je3BvGH8qNEPJmISOvct4I-'
+    ]
+  },
+  rangeMonster: {
+    id: 'rangeMonster',
+    title: 'Logo Shot 狙擊手',
+    subtitle: 'Stephen Curry / Damian Lillard',
+    stats: [10, 10, 8, 5, 6, 9],
+    desc: '你欣賞的是「效率」與「自信」。你相信三分球大於兩分球的數學機率，你嚮往那種一過半場就讓對手絕望的統治力。你的射程改變了比賽規則，對手必須在停車場就開始防守你。',
+    quote: '「距離不是問題，信心才是。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 20, mentality: 60 },
+    images: [
+      'https://lh3.googleusercontent.com/d/1rFSDHphdZWs1WSscTOUXhVCJ6kZz52CO',
+      'https://lh3.googleusercontent.com/d/1IMyvEW2e-gX7W9mQilmXoWSzs1HycOv5'
+    ]
+  },
+  system: {
+    id: 'system',
+    title: '全能控場引擎',
+    subtitle: 'LeBron James / Luka Doncic',
+    stats: [9, 7, 10, 8, 9, 8],
+    desc: '你欣賞的是「智慧」與「掌控」。你喜歡看球員像下棋一樣拆解防守，並用絕對的身體素質輾壓對手。球在你手上球隊才能運轉，你擁有上帝視角，知道場上每個人該站的位置。',
+    quote: '「我不只是得分手，我是比賽的掌控者。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 50, mentality: 85 },
+    images: [
+      'https://lh3.googleusercontent.com/d/1xMqrj_D1SZWiQSBqTlXcXZyFY2KuoG15',
+      'https://lh3.googleusercontent.com/d/1S0raT64c1HtdhUzeBEA_T5pTjlhsyrlr'
+    ]
+  },
+  pointGod: {
+    id: 'pointGod',
+    title: '傳統控衛之神',
+    subtitle: 'Chris Paul / Tyrese Haliburton',
+    stats: [6, 8, 10, 7, 4, 5],
+    desc: '你是古典籃球的信徒。你欣賞那種讓隊友變得更好、失誤極低、戰術執行完美的指揮官。你不追求高得分，但你總能找到空檔的隊友，把球舒服地送到他們手上。',
+    quote: '「讓隊友得分，比我自己得分更有成就感。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 10, mentality: 100 },
+    images: [
+      'https://lh3.googleusercontent.com/d/1wtL1l2yXCT1e_AeGl0InAmkxUxF3tcfe',
+      'https://lh3.googleusercontent.com/d/12JMPw8GjhBZLDVhBXZKrsgiDzDO670mo'
+    ]
+  },
+  midRange: {
+    id: 'midRange',
+    title: '中距離刺客',
+    subtitle: 'Devin Booker / DeMar DeRozan',
+    stats: [9, 8, 7, 7, 8, 8],
+    desc: '你擁有老派的靈魂。在大三分時代，你依然堅持傳統的美學。你欣賞無解的背框單打和急停跳投，在關鍵時刻，你是最穩定的得分點，因為你無視防守環境。',
+    quote: '「他們投三分，我在中距離解決他們。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 25, mentality: 20 },
+    images: [
+      'https://lh3.googleusercontent.com/d/1dIA1ka38nimYEQZKEsYc07BB98BKdrFQ',
+      'https://lh3.googleusercontent.com/d/1h9l3-6CY7zGyBpzZiwuuGt-eZbJ-_aHT'
+    ]
+  },
+  elite3D: {
+    id: 'elite3D',
+    title: '冷血頂級 3D',
+    subtitle: 'Mikal Bridges / OG Anunoby',
+    stats: [5, 8, 7, 9, 7, 4],
+    desc: '你的籃球品味非常成熟。你不追求鎂光燈，而是欣賞那些默默付出、防守滴水不漏、進攻絕不手軟的完美拼圖。你是所有冠軍球隊都夢寐以求的公務員。',
+    quote: '「得最高分的不一定是我，但想贏球一定不能沒有我。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 40, mentality: 95 },
+    images: [
+      'https://lh3.googleusercontent.com/d/1aZ8-g5IAt14Bl41vRuoARJiKIs2GW_cT',
+      'https://lh3.googleusercontent.com/d/1B5wxxheMdnGGe0Sre5F2jVzk32o8KVka'
+    ]
+  },
+  flamethrower: {
+    id: 'flamethrower',
+    title: '佛光普照射手',
+    subtitle: 'Klay Thompson / Ray Allen',
+    stats: [8, 10, 6, 7, 6, 5],
+    desc: '你的籃球靈魂是「純粹」。你不需要長時間持球，只需要 0.5 秒的空檔。平常可以隱形，但你最愛看那種一旦進入狀態，連進 5 顆三分球把對手投到懷疑人生的瘋狂時刻。',
+    quote: '「我不需要運球，只要給我一瞬間，我就能終結比賽。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 40, mentality: 80 },
+    images: [
+      'https://lh3.googleusercontent.com/d/15MS9nTKp6jfleW6ddZt3gPn34VU4Q2Eb',
+      'https://lh3.googleusercontent.com/d/1zGgjOe7lARsBVBCHnk4yEXjvnW1W5PwV'
+    ]
+  },
+  rimDestroyer: {
+    id: 'rimDestroyer',
+    title: '禁區破壞神',
+    subtitle: 'Giannis / Shaq / Zion',
+    stats: [10, 3, 6, 9, 10, 7],
+    desc: '你是力量的信徒。技巧在你絕對的破壞力面前顯得多餘。你欣賞那種統治禁區的霸氣，只要讓你衝起來，除了犯規沒人擋得住。你的灌籃不只是得分，更是摧毀士氣。',
+    quote: '「籃框是用來灌壞的，不是用來瞄準的。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 95, mentality: 40 },
+    images: [
+      'https://lh3.googleusercontent.com/d/14oE95m4IT1Av-A4kj4h3qtsrNmzo1WZG',
+      'https://lh3.googleusercontent.com/d/1HZ3n0w-InKygnhezwe7JL6kZ0A5bZl7p',
+      'https://lh3.googleusercontent.com/d/1uvFKt-uzQ_QH6kmwl7GwFGojtRb2rMG-'
+    ]
+  },
+  unicorn: {
+    id: 'unicorn',
+    title: '外星獨角獸',
+    subtitle: 'Wembanyama / Kevin Durant',
+    stats: [8, 7, 6, 10, 9, 7],
+    desc: '你欣賞的是「違規的存在」。擁有中鋒的身高卻有後衛的手感和運球，這種現代籃球進化出的終極型態是你最嚮往的。你是場上最難防守的錯位。',
+    quote: '「我不是任何位置，我是無解的綜合體。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 80, mentality: 50 },
+    images: [
+      'https://lh3.googleusercontent.com/d/1iyLPxjkHQhsIeHQmSsGTn_yrudd6AcO3',
+      'https://lh3.googleusercontent.com/d/1a74kLq3jfFMEAI3uzTeiCD8yXb2n-L_K'
+    ]
+  },
+  sixthMan: {
+    id: 'sixthMan',
+    title: '板凳暴徒',
+    subtitle: 'Lou Williams / Jordan Clarkson',
+    stats: [9, 7, 5, 2, 6, 8],
+    desc: '你欣賞的是「亂戰高手」。不受戰術拘束，越亂的局面你越強。你或許防守會漏人，但你能在 3 分鐘內連得 10 分把對手打傻，你是專門用來打破僵局的 X 因子。',
+    quote: '「先發只是虛名，終結比賽的才是贏家。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 45, mentality: 10 },
+    images: [
+      'https://lh3.googleusercontent.com/d/1PZbE7VavSqBTHtOrcupXXzrBjUH2ivsz',
+      'https://lh3.googleusercontent.com/d/1ueDZ3v2RMksKBpSfPSJ8sPt-6E_XB3WC'
+    ]
+  },
+  enforcer: {
+    id: 'enforcer',
+    title: '藍領惡棍',
+    subtitle: 'Draymond Green / Dennis Rodman',
+    stats: [3, 4, 8, 10, 8, 3],
+    desc: '數據無法體現你的價值。你專做髒活：卡位、掩護、垃圾話、搞心態。你欣賞這種為了贏球不擇手段的拼命三郎。你是對手最討厭的噩夢，卻是隊友最愛的保鑣。',
+    quote: '「你們負責得分，剩下的全部交給我。」',
+    colors: ['#FFFFFF', '#52525B'],
+    spectrum: { playstyle: 70, mentality: 100 },
+    images: [
+      'https://lh3.googleusercontent.com/d/1RrX7vZ96_C3tJmF-rjl0_Cb2ouPOnW9H',
+      'https://lh3.googleusercontent.com/d/1RgGsgCc8y-S2RRmOG8VKBxqKQwlAsCuD'
+    ]
+  }
+};
+
+const questions = [
+  {
+    id: 1,
+    title: '【戰場哲學】在一個團隊中，你傾向如何發揮影響力？',
+    options: [
+      { text: '大腦運算：掌控全局節奏，做最冷靜的決策。', impact: { skywalker: 1, ankleBreaker: 1, answer: 1, rangeMonster: 1, pointGod: 1, system: 1 } },
+      { text: '終結兵器：撕裂敵方防線，負責給予致命一擊。', impact: { midRange: 1, elite3D: 1, flamethrower: 1, answer: 1 } },
+      { text: '絕對壁壘：鞏固最後防線，享受高強度的肉搏。', impact: { rimDestroyer: 1, unicorn: 1, enforcer: 1 } },
+      { text: '無形齒輪：伺機而動，哪裡有缺口就填補哪裡。', impact: { system: 1, sixthMan: 1, enforcer: 1 } }
+    ]
+  },
+  {
+    id: 2,
+    title: '【生死一瞬】最後三秒落後一分，你最渴望看見的終結方式？',
+    options: [
+      { text: '完美的節奏變換，無視干擾的急停跳投。', impact: { ankleBreaker: 2, midRange: 2, answer: 1 } },
+      { text: '撕裂一切防守，將球殘暴地砸進目標。', impact: { skywalker: 3, rimDestroyer: 2 } },
+      { text: '跑出毫釐空檔，像機器般冷靜的遠距離一擊。', impact: { rangeMonster: 2, flamethrower: 2, elite3D: 1 } },
+      { text: '吸引所有目光，精準無誤地傳給無人角落的隊友。', impact: { system: 2, pointGod: 2 } },
+      { text: '不是進攻，而是將對手的絕殺希望狠狠擊碎。', impact: { elite3D: 2, enforcer: 2, unicorn: 1 } }
+    ]
+  },
+  {
+    id: 3,
+    title: '【天賦抉擇】如果只能擁有極致的一項，你會選擇？',
+    options: [
+      { text: '掙脫地心引力的絕對爆發力。', impact: { skywalker: 3, rimDestroyer: 1 } },
+      { text: '刻進肌肉記憶、像雷達般的準度。', impact: { rangeMonster: 2, flamethrower: 2, midRange: 1 } },
+      { text: '萬物皆在掌控的極致韻律與球感。', impact: { ankleBreaker: 3, answer: 1 } },
+      { text: '碾壓一切阻礙的鋼鐵之軀。', impact: { rimDestroyer: 2, system: 2, enforcer: 1 } },
+      { text: '宛如慢動作般、預見未來的洞察力。', impact: { pointGod: 3, system: 1 } }
+    ]
+  },
+  {
+    id: 4,
+    title: '【進攻美學】面對銅牆鐵壁，你的進攻哲學是？',
+    options: [
+      { text: '燃燒殆盡：就算頭破血流，也要從防線中殺出一條血路。', impact: { answer: 3, skywalker: 1 } },
+      { text: '玩弄重心：把防守者變成藝術品的一部分，華麗地羞辱對手。', impact: { ankleBreaker: 3 } },
+      { text: '擁抱混亂：不按理出牌，用無法預測的節奏打破所有秩序。', impact: { sixthMan: 3 } }
+    ]
+  },
+  {
+    id: 5,
+    title: '【團隊拼圖】作為不需要長時間掌控主導權的殺手，你更嚮往？',
+    options: [
+      { text: '平時隱形，但一旦點燃就能瞬間摧毀對手的核彈。', impact: { flamethrower: 3, rangeMonster: 1 } },
+      { text: '穩定輸出，讓對手永遠無法越雷池一步的無情封鎖線。', impact: { elite3D: 3 } }
+    ]
+  },
+  {
+    id: 6,
+    title: '【防守信仰】哪一種防守畫面最讓你熱血沸騰？',
+    options: [
+      { text: '粉碎希望：從後方追上，將對手必進的球釘死在牆上。', impact: { system: 1, skywalker: 1 } },
+      { text: '窒息壓迫：像影子般黏著對手，讓他連呼吸都覺得困難。', impact: { elite3D: 2, pointGod: 1 } },
+      { text: '摧毀心智：用肉搏與言語，讓對手失去理智、徹底崩潰。', impact: { enforcer: 4 } },
+      { text: '節省能量：防守差不多就好，把體力留給最華麗的進攻。', impact: { sixthMan: 2, ankleBreaker: 1 } }
+    ]
+  },
+  {
+    id: 7,
+    title: '【以小博大】面對禁區裡的龐然大物，你會如何挑戰他？',
+    options: [
+      { text: '用變幻莫測的節奏與手感，在他頭上戲耍取分。', impact: { ankleBreaker: 2, pointGod: 1 } },
+      { text: '簡單俐落，在安全距離外用冷靜的跳投懲罰他。', impact: { midRange: 2, rangeMonster: 1 } },
+      { text: '拒絕閃躲，用爆發力正面迎擊，強行摧毀他的防線。', impact: { skywalker: 4, rimDestroyer: 1 } },
+      { text: '佯裝攻擊，實則為隊友創造最舒服的得分機會。', impact: { system: 1, pointGod: 1 } }
+    ]
+  },
+  {
+    id: 8,
+    title: '【完美替身】你心目中最強的兵器，具備什麼樣的輪廓？',
+    options: [
+      { text: '難以捉摸的極速與極致靈巧。', impact: { ankleBreaker: 1, answer: 1, pointGod: 1 } },
+      { text: '突破物理限制的滯空力與狂氣。', impact: { skywalker: 3 } },
+      { text: '攻防一體、沒有任何弱點的冷酷均衡。', impact: { midRange: 2, elite3D: 2, flamethrower: 1 } },
+      { text: '絕對力量的純粹統治力。', impact: { rimDestroyer: 3, system: 2 } },
+      { text: '違背常理的修長身型與細膩手感。', impact: { unicorn: 4 } }
+    ]
+  }
+];
+
+// --- 輔助元件 ---
+
+// 抽象球星大頭貼 SVG 生成器 (利用幾何圖形與專屬配色)
+const PlayerAvatar = ({ colors }) => (
+  <svg viewBox="0 0 200 200" className="w-48 h-48 mx-auto drop-shadow-2xl mb-6">
+    <defs>
+      <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor={colors[0]} />
+        <stop offset="100%" stopColor={colors[1]} />
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+        <feMerge>
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    {/* 背景圓 */}
+    <circle cx="100" cy="100" r="95" fill="url(#bgGrad)" opacity="0.05" />
+    <circle cx="100" cy="100" r="85" fill="none" stroke="url(#bgGrad)" strokeWidth="1" strokeDasharray="2 4" opacity="0.5" />
+    
+    {/* 抽象人物幾何 */}
+    <g transform="translate(0, 10)">
+      {/* 身體 (球衣) */}
+      <path d="M 60 180 Q 60 110 100 110 Q 140 110 140 180 Z" fill={colors[0]} opacity="0.9" />
+      {/* 球衣線條 */}
+      <path d="M 75 180 L 75 115 M 125 180 L 125 115" stroke={colors[1]} strokeWidth="2" opacity="0.5" />
+      {/* 脖子 */}
+      <rect x="92" y="90" width="16" height="25" fill="#3F3F46" />
+      {/* 頭部 */}
+      <circle cx="100" cy="70" r="28" fill="#D4D4D8" />
+      {/* 護額/髮帶 */}
+      <rect x="72" y="52" width="56" height="8" fill={colors[1]} opacity="0.8" />
+      {/* 抽象五官(墨鏡/專注眼神) */}
+      <rect x="84" y="65" width="32" height="6" rx="3" fill="#18181B" />
+      {/* 籃球元素 */}
+      <circle cx="150" cy="130" r="16" fill="#FFFFFF" filter="url(#glow)" opacity="0.9" />
+      <path d="M 134 130 Q 150 114 166 130 M 150 114 L 150 146" stroke="#18181B" strokeWidth="1.5" fill="none" />
+    </g>
+  </svg>
+);
+
+// 動態 SVG 雷達圖元件
+const RadarChart = ({ stats, color }) => {
+  const labels = ['破壞力', '射程', '球商', '防守', '體能', '華麗度'];
+  const maxVal = 10;
+  const size = 300;
+  const center = size / 2;
+  const radius = 100;
+
+  // 計算頂點座標
+  const getPoint = (value, index, count) => {
+    const angle = (Math.PI * 2 * index) / count - Math.PI / 2;
+    const r = (value / maxVal) * radius;
+    return {
+      x: center + r * Math.cos(angle),
+      y: center + r * Math.sin(angle)
+    };
+  };
+
+  const points = stats.map((val, i) => getPoint(val, i, 6));
+  const pointsStr = points.map(p => `${p.x},${p.y}`).join(' ');
+
+  // 背景網格 (3層)
+  const grids = [10, 6.6, 3.3].map(val => {
+    const pts = Array(6).fill(0).map((_, i) => getPoint(val, i, 6));
+    return pts.map(p => `${p.x},${p.y}`).join(' ');
+  });
+
+  return (
+    <div className="relative w-full max-w-[340px] mx-auto">
+      <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-auto drop-shadow-xl">
+        {/* 背景網格 */}
+        {grids.map((gridPoints, idx) => (
+          <polygon key={`grid-${idx}`} points={gridPoints} fill="none" stroke="#374151" strokeWidth="1" strokeDasharray={idx === 0 ? "" : "2 2"} />
+        ))}
+        {/* 軸線 */}
+        {Array(6).fill(0).map((_, i) => {
+          const outerPoint = getPoint(10, i, 6);
+          return <line key={`axis-${i}`} x1={center} y1={center} x2={outerPoint.x} y2={outerPoint.y} stroke="#374151" strokeWidth="1" />;
+        })}
+        {/* 數值多邊形 */}
+        <polygon 
+          points={pointsStr} 
+          fill={color} 
+          fillOpacity="0.15" 
+          stroke={color} 
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        {/* 頂點圓圈 */}
+        {points.map((p, i) => (
+          <circle key={`pt-${i}`} cx={p.x} cy={p.y} r="4" fill="#000" stroke={color} strokeWidth="2" />
+        ))}
+        {/* 標籤文字 */}
+        {labels.map((label, i) => {
+          const lblPoint = getPoint(12.5, i, 6); // 文字放在稍微外面一點
+          return (
+            <text 
+              key={`label-${i}`} 
+              x={lblPoint.x} 
+              y={lblPoint.y} 
+              fill="#9CA3AF" 
+              fontSize="12" 
+              fontWeight="bold"
+              textAnchor="middle" 
+              dominantBaseline="middle"
+            >
+              {label}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
+// 動態背景元件 (漂浮的極簡籃球)
+const AnimatedBackground = () => (
+  <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <style>
+      {`
+        @keyframes floatBall {
+          0% { transform: translateY(110vh) rotate(0deg) scale(0.8); opacity: 0; }
+          10% { opacity: 0.04; }
+          90% { opacity: 0.04; }
+          100% { transform: translateY(-20vh) rotate(360deg) scale(1.2); opacity: 0; }
+        }
+        .bg-ball { position: absolute; color: #ffffff; animation: floatBall linear infinite; opacity: 0; }
+        .bg-ball-1 { left: 10%; width: 80px; height: 80px; animation-duration: 25s; animation-delay: 0s; }
+        .bg-ball-2 { left: 85%; width: 150px; height: 150px; animation-duration: 35s; animation-delay: -5s; }
+        .bg-ball-3 { left: 45%; width: 60px; height: 60px; animation-duration: 22s; animation-delay: -12s; }
+        .bg-ball-4 { left: 65%; width: 100px; height: 100px; animation-duration: 28s; animation-delay: -2s; }
+        .bg-ball-5 { left: 25%; width: 120px; height: 120px; animation-duration: 32s; animation-delay: -18s; }
+        .bg-ball-6 { left: 75%; width: 70px; height: 70px; animation-duration: 26s; animation-delay: -9s; }
+        .bg-ball-7 { left: 5%; width: 90px; height: 90px; animation-duration: 30s; animation-delay: -15s; }
+      `}
+    </style>
+    {[1, 2, 3, 4, 5, 6, 7].map(i => (
+      <svg key={i} className={`bg-ball bg-ball-${i}`} viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <circle cx="50" cy="50" r="46" />
+        <path d="M 50 4 L 50 96 M 4 50 L 96 50" />
+        <path d="M 17 17 Q 50 50 17 83 M 83 17 Q 50 50 83 83" />
+      </svg>
+    ))}
+  </div>
+);
+
+// --- 主程式 ---
+
+export default function App() {
+  const [stage, setStage] = useState('start'); // start, playing, analyzing, result
+  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [scores, setScores] = useState({});
+  const [resultId, setResultId] = useState(null);
+
+  // 初始化計分板
+  useEffect(() => {
+    const initialScores = {};
+    Object.keys(profiles).forEach(key => initialScores[key] = 0);
+    setScores(initialScores);
+  }, []);
+
+  const handleStart = () => setStage('playing');
+
+  const handleAnswer = (impact) => {
+    // 加上選擇的分數
+    const newScores = { ...scores };
+    Object.keys(impact).forEach(key => {
+      if (newScores[key] !== undefined) {
+        newScores[key] += impact[key];
+      }
+    });
+    setScores(newScores);
+
+    // 延遲一下讓使用者看到點擊效果
+    setTimeout(() => {
+      if (currentQIndex < questions.length - 1) {
+        setCurrentQIndex(currentQIndex + 1);
+      } else {
+        calculateResult(newScores);
+      }
+    }, 300);
+  };
+
+  const calculateResult = (finalScores) => {
+    setStage('analyzing');
+    
+    // 找出最高分的角色
+    let maxScore = -1;
+    let winner = 'system'; // 預設值
+    
+    Object.keys(finalScores).forEach(key => {
+      if (finalScores[key] > maxScore) {
+        maxScore = finalScores[key];
+        winner = key;
+      }
+    });
+    
+    setResultId(winner);
+
+    // 假裝分析中
+    setTimeout(() => {
+      setStage('result');
+    }, 2000);
+  };
+
+  const resetTest = () => {
+    const initialScores = {};
+    Object.keys(profiles).forEach(key => initialScores[key] = 0);
+    setScores(initialScores);
+    setCurrentQIndex(0);
+    setResultId(null);
+    setStage('start');
+  };
+
+  // --- 畫面渲染 ---
+
+  if (stage === 'start') {
+    return (
+      <div className="relative min-h-screen bg-neutral-950 text-neutral-100 flex flex-col items-center justify-center p-6 font-sans">
+        <AnimatedBackground />
+        <div className="relative z-10 max-w-md w-full text-center space-y-8 animate-fade-in-up">
+          <div className="w-24 h-24 bg-white rounded-full mx-auto flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.15)]">
+            <Trophy size={48} className="text-black" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight mb-3">NBA 籃球靈魂測驗</h1>
+            <p className="text-neutral-400 text-lg">
+              這不是測驗你的實力，而是測驗你的籃球品味。憑直覺選出你內心覺得「最帥」的樣子，找出你在 NBA 的靈魂模板！
+            </p>
+          </div>
+          <button 
+            onClick={handleStart}
+            className="w-full py-4 bg-white hover:bg-zinc-200 text-black font-bold rounded-xl text-lg flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-white/10"
+          >
+            <Play size={20} fill="currentColor" />
+            開始尋找靈魂
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === 'playing') {
+    const currentQ = questions[currentQIndex];
+    const progress = ((currentQIndex) / questions.length) * 100;
+
+    return (
+      <div className="relative min-h-screen bg-neutral-950 text-neutral-100 p-6 flex flex-col font-sans">
+        <AnimatedBackground />
+        <div className="relative z-10 max-w-xl w-full mx-auto pt-8 flex-1 flex flex-col">
+          {/* 進度條 */}
+          <div className="mb-8">
+            <div className="flex justify-between text-sm text-neutral-500 mb-2 font-bold">
+              <span>QUESTION {currentQIndex + 1}</span>
+              <span>{currentQIndex + 1} / {questions.length}</span>
+            </div>
+            <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-white transition-all duration-500 ease-out"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* 題目 */}
+          <div className="mb-8 flex-1">
+            <h2 className="text-2xl md:text-3xl font-bold leading-relaxed mb-6">
+              {currentQ.title}
+            </h2>
+            <div className="space-y-4">
+              {currentQ.options.map((opt, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleAnswer(opt.impact)}
+                  className="w-full text-left p-5 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-white/30 transition-all active:scale-[0.98] group"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-6 h-6 rounded-full border-2 border-neutral-700 group-hover:border-white flex-shrink-0 flex items-center justify-center mt-0.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    <span className="text-lg text-neutral-300 group-hover:text-white leading-relaxed">
+                      {opt.text}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === 'analyzing') {
+    return (
+      <div className="relative min-h-screen bg-neutral-950 text-neutral-100 flex flex-col items-center justify-center p-6">
+        <AnimatedBackground />
+        <div className="relative z-10 text-center space-y-6">
+          <div className="relative w-24 h-24 mx-auto">
+            <div className="absolute inset-0 border-4 border-neutral-800 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-white rounded-full border-t-transparent animate-spin"></div>
+            <Activity className="absolute inset-0 m-auto text-white animate-pulse" size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-zinc-300 to-white animate-pulse">
+            正在解碼你的籃球靈魂...
+          </h2>
+          <p className="text-neutral-500">分析戰術傾向與天賦特質</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === 'result' && resultId) {
+    const result = profiles[resultId];
+    
+    return (
+      <div className="relative min-h-screen bg-neutral-950 text-neutral-100 pb-20 font-sans selection:bg-white/20">
+        <AnimatedBackground />
+        <div className="relative z-10">
+          {/* 結果頭部區域 */}
+          <div className="relative pt-16 pb-8 px-6 text-center overflow-hidden">
+            {/* 背景裝飾光暈 */}
+            <div 
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] opacity-10 blur-[100px] rounded-full pointer-events-none"
+              style={{ background: result.colors[0] }}
+            ></div>
+            
+            <div className="relative z-10 max-w-2xl mx-auto">
+              <h3 className="text-zinc-400 font-bold tracking-widest text-sm mb-4">YOUR NBA SOUL</h3>
+              <h1 className="text-5xl md:text-6xl font-black mb-2 tracking-tight">
+                {result.title}
+              </h1>
+              <p className="text-xl text-neutral-400 font-medium mb-8">代表人物：{result.subtitle}</p>
+              
+              {result.images && result.images.length > 0 ? (
+                <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-8 relative z-10">
+                  {result.images.map((imgUrl, idx) => (
+                    <div key={idx} className="relative group">
+                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-all duration-300 rounded-2xl blur-xl group-hover:scale-110"></div>
+                      <img 
+                        src={imgUrl} 
+                        alt={`${result.title} 象徵球員 ${idx + 1}`} 
+                        className="w-40 h-40 md:w-52 md:h-52 object-cover rounded-2xl shadow-2xl transition-all duration-300 z-10 relative bg-neutral-900/50 group-hover:scale-105"
+                        onError={(e) => {
+                          console.error('圖片載入失敗，可能是 Google Drive 權限或跨域問題:', imgUrl);
+                          // 移除了 e.target.style.display = 'none'，讓除錯更方便
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <PlayerAvatar colors={result.colors} />
+              )}
+
+              <div className="bg-neutral-900/80 backdrop-blur-md p-6 rounded-2xl border border-neutral-800 shadow-xl mb-12">
+                <p className="text-lg md:text-xl italic font-serif text-neutral-300 leading-relaxed mb-4">
+                  {result.quote}
+                </p>
+                <div className="h-px w-16 bg-neutral-700 mx-auto"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* 數據與分析區域 */}
+          <div className="max-w-3xl mx-auto px-6 space-y-12">
+            
+            {/* 雷達圖與能力值 */}
+            <div className="grid md:grid-cols-2 gap-8 items-center bg-neutral-900/30 p-8 rounded-3xl border border-neutral-800/50">
+              <div>
+                <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <Crosshair className="text-white" /> 能力解析
+                </h3>
+                <RadarChart stats={result.stats} color={result.colors[0]} />
+              </div>
+              
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                  <Brain className="text-white" /> 靈魂分析
+                </h3>
+                <p className="text-neutral-300 leading-relaxed text-lg">
+                  {result.desc}
+                </p>
+              </div>
+            </div>
+
+            {/* 光譜量表 */}
+            <div className="bg-neutral-900/50 p-8 rounded-3xl border border-neutral-800/50 space-y-8">
+              <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Activity className="text-white" /> 風格光譜
+              </h3>
+              
+              {/* Playstyle Spectrum */}
+              <div>
+                <div className="flex justify-between text-sm font-bold text-neutral-400 mb-3">
+                  <span>地板流 (技巧/節奏)</span>
+                  <span>天空流 (體能/滯空)</span>
+                </div>
+                <div className="h-4 bg-neutral-800 rounded-full relative overflow-hidden shadow-inner">
+                  <div 
+                    className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000"
+                    style={{ 
+                      width: `${result.spectrum.playstyle}%`,
+                      background: `linear-gradient(90deg, #27272A, #FFFFFF)`
+                    }}
+                  ></div>
+                  {/* 指示器 */}
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-black rounded-full shadow-md border-4 transition-all duration-1000"
+                    style={{ 
+                      left: `calc(${result.spectrum.playstyle}% - 12px)`,
+                      borderColor: '#FFFFFF'
+                    }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Mentality Spectrum */}
+              <div>
+                <div className="flex justify-between text-sm font-bold text-neutral-400 mb-3">
+                  <span>孤狼意志 (Hero Ball)</span>
+                  <span>團隊至上 (System)</span>
+                </div>
+                <div className="h-4 bg-neutral-800 rounded-full relative overflow-hidden shadow-inner">
+                  <div 
+                    className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 delay-300"
+                    style={{ 
+                      width: `${result.spectrum.mentality}%`,
+                      background: `linear-gradient(90deg, #27272A, #FFFFFF)`
+                    }}
+                  ></div>
+                  {/* 指示器 */}
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-black rounded-full shadow-md border-4 transition-all duration-1000 delay-300"
+                    style={{ 
+                      left: `calc(${result.spectrum.mentality}% - 12px)`,
+                      borderColor: '#FFFFFF'
+                    }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            {/* 重新測驗按鈕 */}
+            <div className="pt-8 text-center">
+              <button 
+                onClick={resetTest}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white hover:bg-zinc-200 text-black font-bold rounded-xl transition-all active:scale-95"
+              >
+                <RotateCcw size={20} />
+                重新測試
+              </button>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
